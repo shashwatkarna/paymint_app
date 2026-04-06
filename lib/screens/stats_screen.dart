@@ -19,14 +19,50 @@ class StatsScreen extends ConsumerWidget {
     return Scaffold(
       body: Stack(
         children: [
-          // Background System
+          // Ethereal Background System
           Container(color: const Color(0xFF03050C)),
-          _buildRadialGlow(context),
+          
+          // Primary Glow
+          Positioned(
+            top: -150,
+            left: -100,
+            child: Container(
+              width: 400,
+              height: 400,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                    const Color(0xFF8B5CF6).withValues(alpha: 0),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Secondary Glow
+          Positioned(
+            bottom: 50,
+            right: -100,
+            child: Container(
+              width: 350,
+              height: 350,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFF0EA5E9).withValues(alpha: 0.05),
+                    const Color(0xFF0EA5E9).withValues(alpha: 0),
+                  ],
+                ),
+              ),
+            ),
+          ),
           
           SafeArea(
             child: billsAsync.when(
               data: (bills) {
-                // Calculation Logic using BillUtils for cycle-aware tracking
                 final spent = bills.where((b) => BillUtils.isPaidInCurrentMonth(b))
                     .fold(0.0, (sum, b) => sum + (b.amount ?? 0));
                 
@@ -45,7 +81,7 @@ class StatsScreen extends ConsumerWidget {
                           children: [
                             _buildSummaryCard(spent, upcoming, symbol),
                             const SizedBox(height: 32),
-                            _buildSectionHeader('Spending Breakdown'),
+                            _buildSectionHeader('SPENDING BREAKDOWN'),
                             const SizedBox(height: 16),
                             _buildBreakdownList(bills, symbol),
                           ],
@@ -60,26 +96,6 @@ class StatsScreen extends ConsumerWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildRadialGlow(BuildContext context) {
-    return Positioned(
-      top: -100,
-      right: -100,
-      child: Container(
-        width: 300,
-        height: 300,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [
-              const Color(0xFF8B5CF6).withValues(alpha: 0.15),
-              const Color(0xFF8B5CF6).withValues(alpha: 0),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -106,33 +122,33 @@ class StatsScreen extends ConsumerWidget {
     return GlassContainer(
       width: double.infinity,
       blur: 30,
-      opacity: 0.1,
+      opacity: 0.05,
       borderRadius: BorderRadius.circular(32),
-      border: Border.fromBorderSide(BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1)),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(32),
         child: Column(
           children: [
             Text(
-              'Monthly Spending',
-              style: GoogleFonts.manrope(color: Colors.white54, fontSize: 16, fontWeight: FontWeight.w500),
+              'PROJECTED SPEND',
+              style: GoogleFonts.inter(color: Colors.white24, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Text(
               '$symbol${(spent + upcoming).toStringAsFixed(0)}',
               style: GoogleFonts.manrope(
                 fontSize: 48,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
-                letterSpacing: -1,
+                letterSpacing: -1.5,
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 40),
             Row(
               children: [
-                _buildMetric('Spent', '$symbol${spent.toStringAsFixed(0)}', const Color(0xFF10B981)),
-                const SizedBox(width: 16),
-                _buildMetric('Upcoming', '$symbol${upcoming.toStringAsFixed(0)}', const Color(0xFF8B5CF6)),
+                _buildMetric('COMMITTED', '$symbol${spent.toStringAsFixed(0)}', const Color(0xFF10B981)),
+                Container(width: 1, height: 40, color: Colors.white.withValues(alpha: 0.05)),
+                const SizedBox(width: 24),
+                _buildMetric('PENDING', '$symbol${upcoming.toStringAsFixed(0)}', const Color(0xFF8B5CF6)),
               ],
             ),
           ],
@@ -146,23 +162,29 @@ class StatsScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: GoogleFonts.manrope(color: Colors.white38, fontSize: 12, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 4),
+          Text(label, style: GoogleFonts.inter(color: Colors.white24, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+          const SizedBox(height: 6),
           Text(
             value,
-            style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.bold, color: color),
+            style: GoogleFonts.manrope(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
           ),
           const SizedBox(height: 8),
-          Container(height: 3, width: 40, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2))),
+          Container(height: 2, width: 24, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2))),
         ],
       ),
     );
   }
 
   Widget _buildSectionHeader(String title) {
-    return Text(
-      title,
-      style: GoogleFonts.manrope(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 0.5),
+    return Row(
+      children: [
+        Text(
+          title,
+          style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white38, letterSpacing: 2),
+        ),
+        const SizedBox(width: 12),
+        Expanded(child: Container(height: 1, color: Colors.white.withValues(alpha: 0.05))),
+      ],
     );
   }
 

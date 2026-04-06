@@ -91,8 +91,8 @@ class _AddBillScreenState extends ConsumerState<AddBillScreen> {
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: Text(
-          widget.bill == null ? 'Add New Bill' : 'Edit Bill',
-          style: GoogleFonts.manrope(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.white),
+          widget.bill == null ? 'Create Entry' : 'Edit Entry',
+          style: GoogleFonts.manrope(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white, letterSpacing: 0.5),
         ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
@@ -101,20 +101,38 @@ class _AddBillScreenState extends ConsumerState<AddBillScreen> {
       ),
       body: Stack(
         children: [
-          // Background System
+          // Ethereal Background
           Container(color: const Color(0xFF03050C)),
+          
           Positioned(
-            top: -50,
-            left: -50,
+            top: -100,
+            right: -100,
             child: Container(
-              width: 300,
-              height: 300,
+              width: 350,
+              height: 350,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                    const Color(0xFF8B5CF6).withValues(alpha: 0.08),
                     const Color(0xFF8B5CF6).withValues(alpha: 0),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -100,
+            left: -100,
+            child: Container(
+              width: 350,
+              height: 350,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFF3B82F6).withValues(alpha: 0.08),
+                    const Color(0xFF3B82F6).withValues(alpha: 0),
                   ],
                 ),
               ),
@@ -129,21 +147,21 @@ class _AddBillScreenState extends ConsumerState<AddBillScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildLabel('Bill Name'),
-                    _buildTextField(_nameController, 'e.g. HDFC Credit Card', null, iconData: Icons.receipt_long_rounded),
-                    const SizedBox(height: 24),
-                    _buildLabel('Amount (Optional)'),
-                    _buildTextField(_amountController, 'e.g. 5000', symbol, isNumber: true),
-                    const SizedBox(height: 24),
-                    _buildLabel('Due Date'),
+                    _buildLabel('ENTRY NAME'),
+                    _buildTextField(_nameController, 'e.g. Monthly Rent', null, iconData: Icons.receipt_long_rounded),
+                    const SizedBox(height: 32),
+                    _buildLabel('AMOUNT'),
+                    _buildTextField(_amountController, '0.00', symbol, isNumber: true),
+                    const SizedBox(height: 32),
+                    _buildLabel('DUE DATE'),
                     _buildDatePicker(),
-                    const SizedBox(height: 24),
-                    _buildLabel('Category'),
+                    const SizedBox(height: 32),
+                    _buildLabel('CATEGORY'),
                     _buildCategorySelector(),
-                    const SizedBox(height: 24),
-                    _buildLabel('Frequency'),
+                    const SizedBox(height: 32),
+                    _buildLabel('RECURRENCE'),
                     _buildFrequencySelector(),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 48),
                     _buildSaveButton(),
                   ],
                 ),
@@ -160,14 +178,14 @@ class _AddBillScreenState extends ConsumerState<AddBillScreen> {
 
   Widget _buildLabel(String label) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10, left: 4),
+      padding: const EdgeInsets.only(bottom: 12, left: 4),
       child: Text(
         label,
-        style: GoogleFonts.manrope(
-          color: Colors.white70,
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.5,
+        style: GoogleFonts.inter(
+          color: Colors.white24,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 2,
         ),
       ),
     );
@@ -175,49 +193,44 @@ class _AddBillScreenState extends ConsumerState<AddBillScreen> {
 
   Widget _buildTextField(TextEditingController controller, String hint, String? symbol, {IconData? iconData, bool isNumber = false}) {
     return GlassContainer(
-      blur: 25,
-      opacity: 0.08,
-      borderRadius: BorderRadius.circular(20),
-      border: Border.fromBorderSide(
-        BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1),
-      ),
+      blur: 30,
+      opacity: 0.05,
+      borderRadius: BorderRadius.circular(24),
       child: TextFormField(
         controller: controller,
-        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-        style: GoogleFonts.manrope(color: Colors.white, fontSize: 16),
+        keyboardType: isNumber ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
+        style: GoogleFonts.manrope(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
         decoration: InputDecoration(
           hintText: hint,
           prefixIcon: symbol != null 
             ? Container(
-                width: 40,
+                width: 45,
                 alignment: Alignment.center,
-                child: Text(symbol, style: GoogleFonts.manrope(color: const Color(0xFF8B5CF6), fontSize: 18, fontWeight: FontWeight.bold)),
+                child: Text(symbol, style: GoogleFonts.manrope(color: const Color(0xFF8B5CF6), fontSize: 20, fontWeight: FontWeight.bold)),
               )
-            : (iconData != null ? Icon(iconData, color: const Color(0xFF8B5CF6), size: 20) : null),
-          hintStyle: GoogleFonts.manrope(color: Colors.white24),
+            : (iconData != null ? Icon(iconData, color: Colors.white24, size: 20) : null),
+          hintStyle: GoogleFonts.manrope(color: Colors.white.withValues(alpha: 0.1), fontWeight: FontWeight.bold),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.all(20),
+          contentPadding: const EdgeInsets.all(22),
         ),
-        validator: (value) => value!.isEmpty && !isNumber ? 'Required' : null,
+        validator: (value) => value!.isEmpty && !isNumber ? 'Field required' : null,
       ),
     );
   }
 
   Widget _buildDatePicker() {
     return GlassContainer(
-      blur: 25,
-      opacity: 0.08,
-      borderRadius: BorderRadius.circular(20),
-      border: Border.fromBorderSide(
-        BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1),
-      ),
+      blur: 30,
+      opacity: 0.05,
+      borderRadius: BorderRadius.circular(24),
       child: ListTile(
-        leading: const Icon(Icons.calendar_today_rounded, color: Color(0xFF8B5CF6), size: 20),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        leading: const Icon(Icons.calendar_today_rounded, color: Colors.white24, size: 20),
         title: Text(
-          DateFormat('EEEE, MMM dd, yyyy').format(_dueDate),
-          style: GoogleFonts.manrope(color: Colors.white, fontSize: 16),
+          DateFormat('MMM dd, yyyy').format(_dueDate),
+          style: GoogleFonts.manrope(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
         ),
-        trailing: const Icon(Icons.edit_calendar_rounded, color: Colors.white38, size: 20),
+        trailing: const Icon(Icons.edit_calendar_rounded, color: Color(0xFF8B5CF6), size: 20),
         onTap: () async {
           final picked = await showDatePicker(
             context: context,
@@ -229,7 +242,7 @@ class _AddBillScreenState extends ConsumerState<AddBillScreen> {
                 colorScheme: const ColorScheme.dark(
                   primary: Color(0xFF8B5CF6),
                   onPrimary: Colors.white,
-                  surface: Color(0xFF1E293B),
+                  surface: Color(0xFF060E20),
                 ),
               ),
               child: child!,

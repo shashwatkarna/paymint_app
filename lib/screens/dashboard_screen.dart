@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/bill_model.dart';
 import '../services/firestore_service.dart';
 import '../providers/bill_provider.dart';
+import '../providers/user_provider.dart';
 import '../widgets/bill_card.dart';
 import '../utils/bill_utils.dart';
 import 'add_bill_screen.dart';
@@ -22,22 +23,41 @@ class DashboardScreen extends ConsumerWidget {
     return Scaffold(
       body: Stack(
         children: [
-          // Background System: Radial Glows
-          Container(
-            decoration: const BoxDecoration(color: Color(0xFF03050C)),
-          ),
+          // Ethereal Background System: Depth & Atmosphere
+          Container(decoration: const BoxDecoration(color: Color(0xFF03050C))),
+          
+          // Primary Atmospheric Glow (Violet)
           Positioned(
-            top: -100,
-            right: -100,
+            top: -150,
+            left: -100,
             child: Container(
-              width: 300,
-              height: 300,
+              width: 400,
+              height: 400,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFF1E293B).withValues(alpha: 0.15),
-                    const Color(0xFF1E293B).withValues(alpha: 0),
+                    const Color(0xFF8B5CF6).withValues(alpha: 0.12),
+                    const Color(0xFF8B5CF6).withValues(alpha: 0),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Secondary Atmospheric Glow (Cyan/Deep Blue)
+          Positioned(
+            bottom: 100,
+            right: -150,
+            child: Container(
+              width: 500,
+              height: 500,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFF0EA5E9).withValues(alpha: 0.08),
+                    const Color(0xFF0EA5E9).withValues(alpha: 0),
                   ],
                 ),
               ),
@@ -45,18 +65,20 @@ class DashboardScreen extends ConsumerWidget {
           ),
           
           SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(context),
-                Expanded(
-                  child: billsAsync.when(
-                    data: (bills) => _buildBillList(context, bills),
-                    loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFF8B5CF6))),
-                    error: (err, stack) => Center(child: Text('Error: $err', style: const TextStyle(color: Colors.white70))),
+            child: billsAsync.when(
+              data: (bills) => CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  _buildSliverHeader(context),
+                  SliverToBoxAdapter(child: _buildHeroSummary(ref, bills)),
+                  SliverPadding(
+                    padding: const EdgeInsets.only(bottom: 120),
+                    sliver: _buildSliverBillList(context, bills),
                   ),
-                ),
-              ],
+                ],
+              ),
+              loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFF8B5CF6))),
+              error: (err, stack) => Center(child: Text('Error: $err', style: const TextStyle(color: Colors.white70))),
             ),
           ),
         ],
@@ -68,87 +90,165 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildFAB(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF8B5CF6).withValues(alpha: 0.4),
-            blurRadius: 15,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: FloatingActionButton(
-        elevation: 0,
-        backgroundColor: const Color(0xFF8B5CF6),
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add_rounded, color: Colors.white, size: 32),
-        onPressed: () => _navigateTo(context, const AddBillScreen()),
+  Widget _buildSliverHeader(BuildContext context) {
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 10),
+      sliver: SliverToBoxAdapter(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'PayMint',
+                  style: GoogleFonts.manrope(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.5,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  'Intelligent Ledger',
+                  style: GoogleFonts.inter(
+                    color: Colors.white38,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ],
+            ),
+            _buildProfileButton(context),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildProfileButton(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _navigateTo(context, const SettingsScreen()),
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Icon(Icons.person_outline_rounded, color: Colors.white, size: 22),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeroSummary(WidgetRef ref, List<BillModel> bills) {
+    final currencyCode = ref.watch(currencyProvider);
+    final symbol = BillUtils.getCurrencySymbol(currencyCode);
+    
+    double totalUnpaid = 0;
+    double totalPaid = 0;
+    
+    for (var b in bills) {
+      if (b.amount != null) {
+        if (BillUtils.isPaidInCurrentMonth(b)) {
+          totalPaid += b.amount!;
+        } else {
+          totalUnpaid += b.amount!;
+        }
+      }
+    }
+    
+    final totalCommitment = totalPaid + totalUnpaid;
+    final progress = totalCommitment > 0 ? (totalPaid / totalCommitment) : 0.0;
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
+      padding: const EdgeInsets.all(24.0),
+      child: GlassContainer(
+        height: 200,
+        width: double.infinity,
+        blur: 30,
+        opacity: 0.05,
+        borderRadius: BorderRadius.circular(32),
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                'PayMint',
-                style: GoogleFonts.manrope(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -0.5,
-                  color: Colors.white,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('MONTHLY COMMITMENT', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white38, letterSpacing: 1.5)),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text('${(progress * 100).toInt()}% SETTLED', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF10B981))),
+                  ),
+                ],
               ),
+              const SizedBox(height: 12),
               Text(
-                'Intelligent Bill Management',
-                style: GoogleFonts.manrope(
-                  color: Colors.white54,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
+                '$symbol${totalUnpaid.toStringAsFixed(0)}',
+                style: GoogleFonts.manrope(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: -1),
+              ),
+              const Expanded(child: SizedBox(height: 8)),
+              Stack(
+                children: [
+                   Container(
+                    height: 6,
+                    width: double.infinity,
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(10)),
+                  ),
+                   FractionallySizedBox(
+                    widthFactor: progress.clamp(0.0, 1.0),
+                    child: Container(
+                      height: 6,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(colors: [Color(0xFF8B5CF6), Color(0xFFC59AFF)]),
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(color: const Color(0xFF8B5CF6).withValues(alpha: 0.3), blurRadius: 10, spreadRadius: 1),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Remaining Balance', style: GoogleFonts.inter(fontSize: 12, color: Colors.white54)),
+                  Text('Goal: $symbol${totalCommitment.toStringAsFixed(0)}', style: GoogleFonts.inter(fontSize: 12, color: Colors.white24)),
+                ],
               ),
             ],
           ),
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => _navigateTo(context, const SettingsScreen()),
-              borderRadius: BorderRadius.circular(16),
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-                ),
-                child: const Icon(Icons.person_outline_rounded, color: Colors.white, size: 24),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildBillList(BuildContext context, List<BillModel> bills) {
+  Widget _buildSliverBillList(BuildContext context, List<BillModel> bills) {
     if (bills.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.receipt_long_rounded, size: 100, color: Colors.white.withValues(alpha: 0.05)),
-            const SizedBox(height: 20),
-            Text('No bills yet.', style: GoogleFonts.manrope(color: Colors.white30, fontSize: 18)),
-          ],
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.blur_on_rounded, size: 80, color: Colors.white.withValues(alpha: 0.05)),
+              const SizedBox(height: 20),
+              Text('Your ledger is empty.', style: GoogleFonts.inter(color: Colors.white24, fontSize: 16, letterSpacing: 0.5)),
+            ],
+          ),
         ),
       );
     }
@@ -156,83 +256,69 @@ class DashboardScreen extends ConsumerWidget {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     
-    // Logic Refinement: Categorizing bills
     final overdue = bills.where((b) => !b.isPaid && !BillUtils.isPaidInCurrentMonth(b) && b.nextDueDate.isBefore(today)).toList();
     final dueToday = bills.where((b) => !b.isPaid && !BillUtils.isPaidInCurrentMonth(b) &&
-        b.nextDueDate.year == today.year && 
-        b.nextDueDate.month == today.month && 
-        b.nextDueDate.day == today.day).toList();
-    
-    final upcoming = bills.where((b) {
-      if (b.isPaid || BillUtils.isPaidInCurrentMonth(b)) return false;
-      return b.nextDueDate.isAfter(today);
-    }).toList();
-
+        b.nextDueDate.year == today.year && b.nextDueDate.month == today.month && b.nextDueDate.day == today.day).toList();
+    final upcoming = bills.where((b) => !b.isPaid && !BillUtils.isPaidInCurrentMonth(b) && b.nextDueDate.isAfter(today)).toList();
     final settledToday = bills.where((b) => BillUtils.isPaidInCurrentMonth(b)).toList();
 
-    return ListView(
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.only(top: 10),
-      children: [
+    return SliverList(
+      delegate: SliverChildListDelegate([
         if (overdue.isNotEmpty) ...[
-          _buildSectionTitle('Overdue', const Color(0xFFF43F5E)),
-          ...overdue.map((b) => BillCard(bill: b, onMarkPaid: () => _markPaid(context, b))),
+          _buildEtherealSectionHeader('OVERDUE', const Color(0xFFF43F5E)),
+          ...overdue.asMap().entries.map((entry) => _buildStaggeredBillCard(context, entry.value, entry.key, true)),
         ],
         if (dueToday.isNotEmpty) ...[
-          _buildSectionTitle('Due Today', const Color(0xFFFBBF24)),
-          ...dueToday.map((b) => BillCard(bill: b, onMarkPaid: () => _markPaid(context, b))),
+          _buildEtherealSectionHeader('DUE TODAY', const Color(0xFFFBBF24)),
+          ...dueToday.asMap().entries.map((entry) => _buildStaggeredBillCard(context, entry.value, entry.key, false)),
         ],
         if (upcoming.isNotEmpty) ...[
-          _buildSectionTitle('Upcoming', Colors.white54),
-          ...upcoming.map((b) => BillCard(bill: b, onMarkPaid: () => _markPaid(context, b))),
+          _buildEtherealSectionHeader('UPCOMING', Colors.white38),
+          ...upcoming.asMap().entries.map((entry) => _buildStaggeredBillCard(context, entry.value, entry.key, false)),
         ],
         if (settledToday.isNotEmpty) ...[
-          _buildSectionTitle('Settled Today', const Color(0xFF10B981)),
-          ...settledToday.map((b) => BillCard(bill: b, onMarkPaid: null)),
+          _buildEtherealSectionHeader('SETTLED', const Color(0xFF10B981)),
+          ...settledToday.asMap().entries.map((entry) => _buildStaggeredBillCard(context, entry.value, entry.key, false, isSettled: true)),
         ],
-        const SizedBox(height: 100),
-      ],
+      ]),
     );
   }
 
-  Future<void> _markPaid(BuildContext context, BillModel bill) async {
-    await FirestoreService().markAsPaid(bill);
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Settled ${bill.name} for this cycle!', style: GoogleFonts.manrope()),
-          backgroundColor: const Color(0xFF10B981),
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
+  Widget _buildStaggeredBillCard(BuildContext context, BillModel bill, int index, bool isOverdue, {bool isSettled = false}) {
+    // Implement Asymmetrical Staggering (Disabled for Settled items)
+    final double leftPadding = isSettled ? 0 : (index.isEven ? 0 : 12);
+    final double rightPadding = isSettled ? 0 : (index.isEven ? 12 : 0);
+
+    return Padding(
+      padding: EdgeInsets.only(left: leftPadding, right: rightPadding),
+      child: BillCard(
+        bill: bill, 
+        onMarkPaid: isSettled ? null : () => _markPaid(context, bill)
+      ),
+    );
   }
 
-  Widget _buildSectionTitle(String title, Color markerColor) {
+  Widget _buildEtherealSectionHeader(String title, Color color) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+      padding: const EdgeInsets.fromLTRB(32, 32, 24, 12),
       child: Row(
         children: [
-          Container(
-            width: 4,
-            height: 18,
-            decoration: BoxDecoration(color: markerColor, borderRadius: BorderRadius.circular(2)),
-          ),
-          const SizedBox(width: 10),
           Text(
             title,
-            style: GoogleFonts.manrope(
-              fontSize: 14,
+            style: GoogleFonts.inter(
+              fontSize: 10,
               fontWeight: FontWeight.bold,
-              color: Colors.white.withValues(alpha: 0.8),
-              letterSpacing: 0.5,
+              color: color.withValues(alpha: 0.7),
+              letterSpacing: 2,
             ),
           ),
+          const SizedBox(width: 12),
+          Expanded(child: Container(height: 1, color: Colors.white.withValues(alpha: 0.05))),
         ],
       ),
     );
   }
+
 
   Widget _buildBottomNav(BuildContext context) {
     return Container(
@@ -275,6 +361,42 @@ class DashboardScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildFAB(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF8B5CF6).withValues(alpha: 0.4),
+            blurRadius: 15,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: FloatingActionButton(
+        elevation: 0,
+        backgroundColor: const Color(0xFF8B5CF6),
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add_rounded, color: Colors.white, size: 32),
+        onPressed: () => _navigateTo(context, const AddBillScreen()),
+      ),
+    );
+  }
+
+  Future<void> _markPaid(BuildContext context, BillModel bill) async {
+    await FirestoreService().markAsPaid(bill);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Settled ${bill.name} for this cycle!', style: GoogleFonts.inter()),
+          backgroundColor: const Color(0xFF10B981),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   void _navigateTo(BuildContext context, Widget screen) {

@@ -45,127 +45,140 @@ class BillCard extends ConsumerWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: GlassContainer(
-        height: 110,
-        width: double.infinity,
-        blur: 25,
-        opacity: 0.08,
-        border: Border.fromBorderSide(
-          BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1),
-        ),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withValues(alpha: 0.1),
-            Colors.white.withValues(alpha: 0.03),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(24),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-            child: Row(
-              children: [
-                // Neon Status Indicator
-                Container(
-                  width: 6,
-                  height: 45,
-                  decoration: BoxDecoration(
-                    color: recentlyPaid ? const Color(0xFF10B981) : statusColor,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: (recentlyPaid ? const Color(0xFF10B981) : statusColor).withValues(alpha: 0.6),
-                        blurRadius: 12,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        bill.name,
-                        style: GoogleFonts.manrope(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Icon(
-                            recentlyPaid ? Icons.check_circle_outline_rounded : Icons.calendar_today_outlined,
-                            size: 14,
-                            color: recentlyPaid ? const Color(0xFF10B981) : Colors.white.withValues(alpha: 0.5),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            recentlyPaid 
-                              ? 'Settled Today'
-                              : 'Due: ${DateFormat('MMM dd, yyyy').format(bill.nextDueDate)}',
-                            style: GoogleFonts.manrope(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: recentlyPaid ? const Color(0xFF10B981) : Colors.white.withValues(alpha: 0.5),
-                            ),
+      child: Stack(
+        children: [
+          GlassContainer(
+            height: 110,
+            width: double.infinity,
+            blur: 25,
+            opacity: 0.08,
+            borderRadius: BorderRadius.circular(24),
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(24),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                child: Row(
+                  children: [
+                    // Neon Status Indicator
+                    Container(
+                      width: 4,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: recentlyPaid ? const Color(0xFF10B981) : statusColor,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: (recentlyPaid ? const Color(0xFF10B981) : statusColor).withValues(alpha: 0.6),
+                            blurRadius: 12,
+                            spreadRadius: 2,
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    if (bill.amount != null)
-                      Text(
-                        '$symbol${bill.amount!.toStringAsFixed(2)}',
-                        style: GoogleFonts.manrope(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: recentlyPaid ? Colors.white70 : const Color(0xFFC59AFF),
-                        ),
-                      ),
-                    if (!bill.isPaid && !recentlyPaid)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4.0),
-                        child: TextButton(
-                          onPressed: onMarkPaid,
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                            backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.1),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                          child: Text(
-                            'MARK PAID',
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            bill.name,
                             style: GoogleFonts.manrope(
-                              color: const Color(0xFF10B981),
-                              fontSize: 10,
+                              fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              letterSpacing: 0.8,
+                              color: Colors.white,
+                              letterSpacing: 0.5,
                             ),
                           ),
-                        ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Icon(
+                                recentlyPaid ? Icons.check_circle_outline_rounded : Icons.calendar_today_outlined,
+                                size: 14,
+                                color: recentlyPaid ? const Color(0xFF10B981) : Colors.white.withValues(alpha: 0.5),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                recentlyPaid 
+                                  ? 'Settled Today'
+                                  : 'Due: ${DateFormat('MMM dd, yyyy').format(bill.nextDueDate)}',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: recentlyPaid ? const Color(0xFF10B981) : Colors.white.withValues(alpha: 0.5),
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                    if (recentlyPaid)
-                      const Icon(Icons.verified_rounded, color: Color(0xFF10B981), size: 24),
+                    ),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        if (bill.amount != null)
+                          Text(
+                            '$symbol${bill.amount!.toStringAsFixed(2)}',
+                            style: GoogleFonts.manrope(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: recentlyPaid ? Colors.white70 : const Color(0xFFC59AFF),
+                            ),
+                          ),
+                        if (!bill.isPaid && !recentlyPaid)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4.0),
+                            child: TextButton(
+                              onPressed: onMarkPaid,
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.1),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              child: Text(
+                                'SETTLE',
+                                style: GoogleFonts.inter(
+                                  color: const Color(0xFF10B981),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (recentlyPaid) ...[
+                          const SizedBox(height: 8),
+                          const Icon(Icons.verified_rounded, color: Color(0xFF10B981), size: 24),
+                        ],
+                      ],
+                    ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
+          // Subtle Status Glow in Corner
+          Positioned(
+            top: 0,
+            right: 0,
+            child: Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  colors: [
+                    (recentlyPaid ? const Color(0xFF10B981) : statusColor).withValues(alpha: 0.08),
+                    (recentlyPaid ? const Color(0xFF10B981) : statusColor).withValues(alpha: 0),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
