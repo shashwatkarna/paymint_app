@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:glassmorphism_ui/glassmorphism_ui.dart';
 import '../models/bill_model.dart';
 import 'package:intl/intl.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class BillCard extends StatelessWidget {
   final BillModel bill;
@@ -16,53 +17,64 @@ class BillCard extends StatelessWidget {
   });
 
   Color _getStatusColor() {
-    if (bill.isPaid) return Colors.greenAccent;
-    if (bill.nextDueDate.isBefore(DateTime.now())) return const Color(0xFFFF6E84);
+    if (bill.isPaid) return const Color(0xFF10B981); // Emerald Glow
+    if (bill.nextDueDate.isBefore(DateTime.now())) return const Color(0xFFF43F5E); // Rose Glow
     if (bill.nextDueDate.difference(DateTime.now()).inDays <= 3) {
-      return const Color(0xFFFBBF24);
+      return const Color(0xFFFBBF24); // Amber Glow
     }
-    return const Color(0xFF8B5CF6);
+    return const Color(0xFF8B5CF6); // Violet Glow
+  }
+
+  bool _isRecentlyPaid() {
+    if (bill.lastPaidDate == null) return false;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final paidDate = DateTime(bill.lastPaidDate!.year, bill.lastPaidDate!.month, bill.lastPaidDate!.day);
+    return paidDate == today;
   }
 
   @override
   Widget build(BuildContext context) {
     final statusColor = _getStatusColor();
+    final recentlyPaid = _isRecentlyPaid();
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: GlassContainer(
-        height: 100,
+        height: 110,
         width: double.infinity,
-        blur: 15,
+        blur: 25,
+        opacity: 0.08,
         border: Border.fromBorderSide(
-          BorderSide(color: statusColor.withValues(alpha: 0.2), width: 1),
+          BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1),
         ),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.white.withValues(alpha: 0.05),
-            Colors.white.withValues(alpha: 0.02),
+            Colors.white.withValues(alpha: 0.1),
+            Colors.white.withValues(alpha: 0.03),
           ],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
             child: Row(
               children: [
+                // Neon Status Indicator
                 Container(
-                  width: 12,
-                  height: 12,
+                  width: 6,
+                  height: 45,
                   decoration: BoxDecoration(
-                    color: statusColor,
-                    shape: BoxShape.circle,
+                    color: recentlyPaid ? const Color(0xFF10B981) : statusColor,
+                    borderRadius: BorderRadius.circular(10),
                     boxShadow: [
                       BoxShadow(
-                        color: statusColor.withValues(alpha: 0.5),
-                        blurRadius: 8,
+                        color: (recentlyPaid ? const Color(0xFF10B981) : statusColor).withValues(alpha: 0.6),
+                        blurRadius: 12,
                         spreadRadius: 2,
                       ),
                     ],
@@ -76,19 +88,33 @@ class BillCard extends StatelessWidget {
                     children: [
                       Text(
                         bill.name,
-                        style: const TextStyle(
+                        style: GoogleFonts.manrope(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
+                          letterSpacing: 0.5,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Due: ${DateFormat('MMM dd, yyyy').format(bill.nextDueDate)}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white.withValues(alpha: 0.6),
-                        ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Icon(
+                            recentlyPaid ? Icons.check_circle_outline_rounded : Icons.calendar_today_outlined,
+                            size: 14,
+                            color: recentlyPaid ? const Color(0xFF10B981) : Colors.white.withValues(alpha: 0.5),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            recentlyPaid 
+                              ? 'Settled Today'
+                              : 'Due: ${DateFormat('MMM dd, yyyy').format(bill.nextDueDate)}',
+                            style: GoogleFonts.manrope(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: recentlyPaid ? const Color(0xFF10B981) : Colors.white.withValues(alpha: 0.5),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -100,18 +126,35 @@ class BillCard extends StatelessWidget {
                     if (bill.amount != null)
                       Text(
                         '\$${bill.amount!.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFFC59AFF),
+                        style: GoogleFonts.manrope(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: recentlyPaid ? Colors.white70 : const Color(0xFFC59AFF),
                         ),
                       ),
-                    if (!bill.isPaid)
-                      TextButton(
-                        onPressed: onMarkPaid,
-                        child: const Text('Mark Paid',
-                            style: TextStyle(color: Colors.greenAccent)),
+                    if (!bill.isPaid && !recentlyPaid)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4.0),
+                        child: TextButton(
+                          onPressed: onMarkPaid,
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.1),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: Text(
+                            'MARK PAID',
+                            style: GoogleFonts.manrope(
+                              color: const Color(0xFF10B981),
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ),
                       ),
+                    if (recentlyPaid)
+                      const Icon(Icons.verified_rounded, color: Color(0xFF10B981), size: 24),
                   ],
                 ),
               ],

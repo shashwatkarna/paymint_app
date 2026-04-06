@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum RecurringFrequency { weekly, monthly, yearly, none }
+enum RecurringFrequency { none, weekly, monthly, yearly }
 
 class BillModel {
   final String id;
@@ -11,7 +11,8 @@ class BillModel {
   final String category;
   final RecurringFrequency frequency;
   final bool isPaid;
-  final int reminderDaysBefore;
+  final DateTime? lastPaidDate; 
+  final int reminderDaysBefore; // New field for notification logic
 
   BillModel({
     required this.id,
@@ -22,23 +23,27 @@ class BillModel {
     required this.category,
     this.frequency = RecurringFrequency.monthly,
     this.isPaid = false,
-    this.reminderDaysBefore = 3,
+    this.lastPaidDate,
+    this.reminderDaysBefore = 1, // Default reminder is 1 day before
   });
 
-  factory BillModel.fromFirestore(Map<String, dynamic> json, String id) {
+  factory BillModel.fromFirestore(Map<String, dynamic> data, String id) {
     return BillModel(
       id: id,
-      name: json['name'] ?? '',
-      amount: json['amount']?.toDouble(),
-      dueDate: (json['dueDate'] as Timestamp).toDate(),
-      nextDueDate: (json['nextDueDate'] as Timestamp).toDate(),
-      category: json['category'] ?? 'Other',
+      name: data['name'] ?? '',
+      amount: data['amount']?.toDouble(),
+      dueDate: (data['dueDate'] as Timestamp).toDate(),
+      nextDueDate: (data['nextDueDate'] as Timestamp).toDate(),
+      category: data['category'] ?? 'Miscellaneous',
       frequency: RecurringFrequency.values.firstWhere(
-        (e) => e.toString().split('.').last == (json['frequency'] ?? 'monthly'),
+        (f) => f.toString() == data['frequency'],
         orElse: () => RecurringFrequency.monthly,
       ),
-      isPaid: json['isPaid'] ?? false,
-      reminderDaysBefore: json['reminderDaysBefore'] ?? 3,
+      isPaid: data['isPaid'] ?? false,
+      lastPaidDate: data['lastPaidDate'] != null 
+          ? (data['lastPaidDate'] as Timestamp).toDate() 
+          : null,
+      reminderDaysBefore: data['reminderDaysBefore'] ?? 1,
     );
   }
 
@@ -49,13 +54,15 @@ class BillModel {
       'dueDate': Timestamp.fromDate(dueDate),
       'nextDueDate': Timestamp.fromDate(nextDueDate),
       'category': category,
-      'frequency': frequency.toString().split('.').last,
+      'frequency': frequency.toString(),
       'isPaid': isPaid,
+      'lastPaidDate': lastPaidDate != null ? Timestamp.fromDate(lastPaidDate!) : null,
       'reminderDaysBefore': reminderDaysBefore,
     };
   }
 
   BillModel copyWith({
+    String? id,
     String? name,
     double? amount,
     DateTime? dueDate,
@@ -63,10 +70,11 @@ class BillModel {
     String? category,
     RecurringFrequency? frequency,
     bool? isPaid,
+    DateTime? lastPaidDate,
     int? reminderDaysBefore,
   }) {
     return BillModel(
-      id: id,
+      id: id ?? this.id,
       name: name ?? this.name,
       amount: amount ?? this.amount,
       dueDate: dueDate ?? this.dueDate,
@@ -74,13 +82,13 @@ class BillModel {
       category: category ?? this.category,
       frequency: frequency ?? this.frequency,
       isPaid: isPaid ?? this.isPaid,
+      lastPaidDate: lastPaidDate ?? this.lastPaidDate,
       reminderDaysBefore: reminderDaysBefore ?? this.reminderDaysBefore,
     );
   }
 
-  /// Calculates the next due date based on the frequency.
-  static DateTime calculateNextDueDate(DateTime current, RecurringFrequency frequency) {
-    switch (frequency) {
+  static DateTime calculateNextDueDate(DateTime current, RecurringFrequency freq) {
+    switch (freq) {
       case RecurringFrequency.weekly:
         return current.add(const Duration(days: 7));
       case RecurringFrequency.monthly:

@@ -24,14 +24,19 @@ class FirestoreService {
 
   /// Marks a bill as paid and updates the next due date for recurring bills.
   Future<void> markAsPaid(BillModel bill) async {
+    final now = DateTime.now();
     if (bill.frequency == RecurringFrequency.none) {
-      await _db.collection(_collection).doc(bill.id).update({'isPaid': true});
+      await _db.collection(_collection).doc(bill.id).update({
+        'isPaid': true,
+        'lastPaidDate': Timestamp.fromDate(now),
+      });
     } else {
       final nextDate = BillModel.calculateNextDueDate(bill.nextDueDate, bill.frequency);
       final updatedBill = bill.copyWith(
         isPaid: false, // Reset paid status for the next cycle
         dueDate: bill.nextDueDate,
         nextDueDate: nextDate,
+        lastPaidDate: now, // Record it was paid today
       );
       await updateBill(updatedBill);
     }
