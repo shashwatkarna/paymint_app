@@ -1,26 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'services/notification_service.dart';
-import 'screens/dashboard_screen.dart';
 import 'firebase_options.dart';
+import 'screens/dashboard_screen.dart';
+import 'screens/welcome_screen.dart';
+import 'services/auth_service.dart';
+import 'providers/user_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize Firebase with explicit options for Cross-platform stability
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-  } catch (e) {
-    debugPrint('Firebase initialization error: $e');
-  }
-
-  // Initialize Local Notifications
-  await NotificationService.init();
-
+  // Initialize Firebase with the manually generated options to avoid CLI dependency
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
   runApp(
     const ProviderScope(
       child: PayMintApp(),
@@ -28,48 +24,74 @@ void main() async {
   );
 }
 
-class PayMintApp extends StatelessWidget {
+class PayMintApp extends ConsumerWidget {
   const PayMintApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeProvider);
+    
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
       title: 'PayMint',
+      debugShowCheckedModeBanner: false,
+      themeMode: themeMode,
       theme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.light,
+        colorSchemeSeed: const Color(0xFF8B5CF6),
+        scaffoldBackgroundColor: Colors.white,
+        textTheme: GoogleFonts.manropeTextTheme(
+          ThemeData.light().textTheme,
+        ),
+      ),
+      darkTheme: ThemeData(
+        useMaterial3: true,
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF03050C), // Deeper Midnight Black
-        primaryColor: const Color(0xFF8B5CF6),
+        scaffoldBackgroundColor: const Color(0xFF030500),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF8B5CF6),
+          brightness: Brightness.dark,
+          surface: const Color(0xFF030500),
+        ),
         textTheme: GoogleFonts.manropeTextTheme(
           ThemeData.dark().textTheme.apply(
             bodyColor: Colors.white,
             displayColor: Colors.white,
           ),
-        ).copyWith(
-          displayLarge: GoogleFonts.manrope(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            letterSpacing: -1.0,
-            color: Colors.white,
-          ),
-          titleLarge: GoogleFonts.manrope(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.5,
-            color: Colors.white,
-          ),
         ),
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF8B5CF6),
-          brightness: Brightness.dark,
-          primary: const Color(0xFF8B5CF6),
-          secondary: const Color(0xFF0EA5E9), // Sky Cyan for secondary actions
-          surface: const Color(0xFF0F172A), // Dark Slate for surfaces
-          error: const Color(0xFFF43F5E), // Rose for warnings
-        ),
-        useMaterial3: true,
       ),
-      home: const DashboardScreen(),
+      home: const AuthWrapper(),
+    );
+  }
+}
+
+/// AuthWrapper: Manages the high-level application state based on authentication.
+class AuthWrapper extends ConsumerWidget {
+  const AuthWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authService = AuthService();
+    
+    return StreamBuilder<User?>(
+      stream: authService.authStateChanges,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(color: Color(0xFF8B5CF6)),
+            ),
+          );
+        }
+        
+        if (snapshot.hasData) {
+          // User is signed in
+          return const DashboardScreen();
+        }
+        
+        // User is not signed in
+        return const WelcomeScreen();
+      },
     );
   }
 }

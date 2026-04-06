@@ -31,7 +31,8 @@ class FirestoreService {
         'lastPaidDate': Timestamp.fromDate(now),
       });
     } else {
-      final nextDate = BillModel.calculateNextDueDate(bill.nextDueDate, bill.frequency);
+      final nextDate =
+          BillModel.calculateNextDueDate(bill.nextDueDate, bill.frequency);
       final updatedBill = bill.copyWith(
         isPaid: false, // Reset paid status for the next cycle
         dueDate: bill.nextDueDate,
