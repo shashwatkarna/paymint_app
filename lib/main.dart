@@ -6,11 +6,15 @@ import 'package:google_fonts/google_fonts.dart';
 import 'firebase_options.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/welcome_screen.dart';
+import 'services/notification_service.dart';
 import 'services/auth_service.dart';
 import 'providers/user_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Notification Service
+  await NotificationService.init();
   
   // Initialize Firebase with the manually generated options to avoid CLI dependency
   await Firebase.initializeApp(

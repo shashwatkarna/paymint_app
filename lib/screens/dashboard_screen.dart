@@ -274,7 +274,7 @@ class DashboardScreen extends ConsumerWidget {
         ],
         if (upcoming.isNotEmpty) ...[
           _buildEtherealSectionHeader('UPCOMING', Colors.white38),
-          ...upcoming.asMap().entries.map((entry) => _buildStaggeredBillCard(context, entry.value, entry.key, false)),
+          ...upcoming.asMap().entries.map((entry) => _buildStaggeredBillCard(context, entry.value, entry.key, false, isSettled: true)),
         ],
         if (settledToday.isNotEmpty) ...[
           _buildEtherealSectionHeader('SETTLED', const Color(0xFF10B981)),
