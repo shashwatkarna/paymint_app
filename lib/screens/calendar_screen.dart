@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:glassmorphism_ui/glassmorphism_ui.dart';
 import '../models/bill_model.dart';
-import 'dashboard_screen.dart';
+import '../providers/bill_provider.dart';
 import '../widgets/bill_card.dart';
 import '../services/firestore_service.dart';
 

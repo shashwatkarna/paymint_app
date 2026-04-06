@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:glassmorphism_ui/glassmorphism_ui.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../models/bill_model.dart';
 import '../services/firestore_service.dart';
+import '../providers/user_provider.dart';
+import '../utils/bill_utils.dart';
 
-class AddBillScreen extends StatefulWidget {
+class AddBillScreen extends ConsumerStatefulWidget {
   final BillModel? bill;
 
   const AddBillScreen({super.key, this.bill});
 
   @override
-  State<AddBillScreen> createState() => _AddBillScreenState();
+  ConsumerState<AddBillScreen> createState() => _AddBillScreenState();
 }
 
-class _AddBillScreenState extends State<AddBillScreen> {
+class _AddBillScreenState extends ConsumerState<AddBillScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _amountController = TextEditingController();
@@ -81,6 +84,9 @@ class _AddBillScreenState extends State<AddBillScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final currencyCode = ref.watch(currencyProvider);
+    final symbol = BillUtils.getCurrencySymbol(currencyCode);
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -124,10 +130,10 @@ class _AddBillScreenState extends State<AddBillScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildLabel('Bill Name'),
-                    _buildTextField(_nameController, 'e.g. HDFC Credit Card', Icons.receipt_long_rounded),
+                    _buildTextField(_nameController, 'e.g. HDFC Credit Card', null, iconData: Icons.receipt_long_rounded),
                     const SizedBox(height: 24),
                     _buildLabel('Amount (Optional)'),
-                    _buildTextField(_amountController, 'e.g. 5000', Icons.attach_money_rounded, isNumber: true),
+                    _buildTextField(_amountController, 'e.g. 5000', symbol, isNumber: true),
                     const SizedBox(height: 24),
                     _buildLabel('Due Date'),
                     _buildDatePicker(),
@@ -167,7 +173,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hint, IconData icon, {bool isNumber = false}) {
+  Widget _buildTextField(TextEditingController controller, String hint, String? symbol, {IconData? iconData, bool isNumber = false}) {
     return GlassContainer(
       blur: 25,
       opacity: 0.08,
@@ -181,7 +187,13 @@ class _AddBillScreenState extends State<AddBillScreen> {
         style: GoogleFonts.manrope(color: Colors.white, fontSize: 16),
         decoration: InputDecoration(
           hintText: hint,
-          prefixIcon: Icon(icon, color: const Color(0xFF8B5CF6), size: 20),
+          prefixIcon: symbol != null 
+            ? Container(
+                width: 40,
+                alignment: Alignment.center,
+                child: Text(symbol, style: GoogleFonts.manrope(color: const Color(0xFF8B5CF6), fontSize: 18, fontWeight: FontWeight.bold)),
+              )
+            : (iconData != null ? Icon(iconData, color: const Color(0xFF8B5CF6), size: 20) : null),
           hintStyle: GoogleFonts.manrope(color: Colors.white24),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.all(20),

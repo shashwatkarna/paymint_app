@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:glassmorphism_ui/glassmorphism_ui.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/bill_model.dart';
-import 'dashboard_screen.dart';
+import '../providers/bill_provider.dart';
+import '../providers/user_provider.dart';
+import '../utils/bill_utils.dart';
 
 class StatsScreen extends ConsumerWidget {
   const StatsScreen({super.key});
@@ -11,43 +13,50 @@ class StatsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final billsAsync = ref.watch(billStreamProvider);
+    final currencyCode = ref.watch(currencyProvider);
+    final symbol = BillUtils.getCurrencySymbol(currencyCode);
 
     return Scaffold(
       body: Stack(
         children: [
           // Background System
           Container(color: const Color(0xFF03050C)),
-          Positioned(
-            top: 200,
-            right: -50,
-            child: Container(
-              width: 400,
-              height: 400,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    const Color(0xFF0EA5E9).withValues(alpha: 0.1),
-                    const Color(0xFF0EA5E9).withValues(alpha: 0),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
+          _buildRadialGlow(context),
+          
           SafeArea(
-            child: CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                _buildSliverHeader(context),
-                SliverToBoxAdapter(
-                  child: billsAsync.when(
-                    data: (bills) => _buildStatsContent(context, bills),
-                    loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFF8B5CF6))),
-                    error: (err, stack) => Center(child: Text('Error: $err', style: const TextStyle(color: Colors.white70))),
-                  ),
-                ),
-              ],
+            child: billsAsync.when(
+              data: (bills) {
+                // Calculation Logic using BillUtils for cycle-aware tracking
+                final spent = bills.where((b) => BillUtils.isPaidInCurrentMonth(b))
+                    .fold(0.0, (sum, b) => sum + (b.amount ?? 0));
+                
+                final upcoming = bills.where((b) => !b.isPaid && !BillUtils.isPaidInCurrentMonth(b) && BillUtils.isDueInCurrentMonth(b))
+                    .fold(0.0, (sum, b) => sum + (b.amount ?? 0));
+
+                return CustomScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    _buildAppBar(context),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildSummaryCard(spent, upcoming, symbol),
+                            const SizedBox(height: 32),
+                            _buildSectionHeader('Spending Breakdown'),
+                            const SizedBox(height: 16),
+                            _buildBreakdownList(bills, symbol),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFF8B5CF6))),
+              error: (err, stack) => Center(child: Text('Error: $err', style: const TextStyle(color: Colors.white70))),
             ),
           ),
         ],
@@ -55,85 +64,76 @@ class StatsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSliverHeader(BuildContext context) {
-    return SliverAppBar(
-      expandedHeight: 120,
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-        onPressed: () => Navigator.pop(context),
-      ),
-      flexibleSpace: FlexibleSpaceBar(
-        centerTitle: false,
-        titlePadding: const EdgeInsets.only(left: 60, bottom: 16),
-        title: Text(
-          'Analytics',
-          style: GoogleFonts.manrope(
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-            color: Colors.white,
+  Widget _buildRadialGlow(BuildContext context) {
+    return Positioned(
+      top: -100,
+      right: -100,
+      child: Container(
+        width: 300,
+        height: 300,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(
+            colors: [
+              const Color(0xFF8B5CF6).withValues(alpha: 0.15),
+              const Color(0xFF8B5CF6).withValues(alpha: 0),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildStatsContent(BuildContext context, List<BillModel> bills) {
-    final totalSpent = bills.where((b) => b.isPaid).fold(0.0, (sum, b) => sum + (b.amount ?? 0));
-    final totalUpcoming = bills.where((b) => !b.isPaid).fold(0.0, (sum, b) => sum + (b.amount ?? 0));
-    
-    // Grouping by category
-    final categoryTotals = <String, double>{};
-    for (var bill in bills) {
-      categoryTotals[bill.category] = (categoryTotals[bill.category] ?? 0) + (bill.amount ?? 0);
-    }
-    final sortedCategories = categoryTotals.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
-
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSummaryCard(totalSpent, totalUpcoming),
-          const SizedBox(height: 32),
-          _buildSectionHeader('Spending by Category'),
-          const SizedBox(height: 16),
-          ...sortedCategories.map((entry) => _buildCategoryRow(entry.key, entry.value, totalSpent + totalUpcoming)),
-          const SizedBox(height: 40),
-          _buildInsightCard(bills),
-        ],
+  Widget _buildAppBar(BuildContext context) {
+    return SliverAppBar(
+      expandedHeight: 0,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+        onPressed: () => Navigator.pop(context),
       ),
+      title: Text(
+        'Analytics',
+        style: GoogleFonts.manrope(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.white),
+      ),
+      centerTitle: true,
     );
   }
 
-  Widget _buildSummaryCard(double spent, double upcoming) {
+
+  Widget _buildSummaryCard(double spent, double upcoming, String symbol) {
     return GlassContainer(
-      blur: 25,
+      width: double.infinity,
+      blur: 30,
       opacity: 0.1,
-      borderRadius: BorderRadius.circular(28),
-      border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+      borderRadius: BorderRadius.circular(32),
+      border: Border.fromBorderSide(BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1)),
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildMetric('Spent', '\$${spent.toStringAsFixed(0)}', const Color(0xFF10B981)),
-                Container(width: 1, height: 40, color: Colors.white24),
-                _buildMetric('Upcoming', '\$${upcoming.toStringAsFixed(0)}', const Color(0xFF8B5CF6)),
-              ],
+            Text(
+              'Monthly Spending',
+              style: GoogleFonts.manrope(color: Colors.white54, fontSize: 16, fontWeight: FontWeight.w500),
             ),
-            const SizedBox(height: 24),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: LinearProgressIndicator(
-                value: (spent + upcoming) > 0 ? spent / (spent + upcoming) : 0,
-                minHeight: 12,
-                backgroundColor: Colors.white.withValues(alpha: 0.05),
-                color: const Color(0xFF10B981),
+            const SizedBox(height: 8),
+            Text(
+              '$symbol${(spent + upcoming).toStringAsFixed(0)}',
+              style: GoogleFonts.manrope(
+                fontSize: 48,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: -1,
               ),
+            ),
+            const SizedBox(height: 32),
+            Row(
+              children: [
+                _buildMetric('Spent', '$symbol${spent.toStringAsFixed(0)}', const Color(0xFF10B981)),
+                const SizedBox(width: 16),
+                _buildMetric('Upcoming', '$symbol${upcoming.toStringAsFixed(0)}', const Color(0xFF8B5CF6)),
+              ],
             ),
           ],
         ),
@@ -142,48 +142,18 @@ class StatsScreen extends ConsumerWidget {
   }
 
   Widget _buildMetric(String label, String value, Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: GoogleFonts.manrope(color: Colors.white54, fontSize: 13)),
-        const SizedBox(height: 4),
-        Text(value, style: GoogleFonts.manrope(color: color, fontSize: 24, fontWeight: FontWeight.bold)),
-      ],
-    );
-  }
-
-  Widget _buildCategoryRow(String category, double amount, double total) {
-    final percentage = total > 0 ? amount / total : 0.0;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+    return Expanded(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(category, style: GoogleFonts.manrope(color: Colors.white, fontWeight: FontWeight.w600)),
-              Text('\$${amount.toStringAsFixed(0)}', style: GoogleFonts.manrope(color: Colors.white70)),
-            ],
+          Text(label, style: GoogleFonts.manrope(color: Colors.white38, fontSize: 12, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.bold, color: color),
           ),
           const SizedBox(height: 8),
-          Stack(
-            children: [
-              Container(
-                height: 6,
-                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(3)),
-              ),
-              FractionallySizedBox(
-                widthFactor: percentage,
-                child: Container(
-                  height: 6,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [Color(0xFF8B5CF6), Color(0xFF0EA5E9)]),
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          Container(height: 3, width: 40, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2))),
         ],
       ),
     );
@@ -192,36 +162,62 @@ class StatsScreen extends ConsumerWidget {
   Widget _buildSectionHeader(String title) {
     return Text(
       title,
-      style: GoogleFonts.manrope(
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-        color: Colors.white,
-        letterSpacing: 0.5,
+      style: GoogleFonts.manrope(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 0.5),
+    );
+  }
+
+  Widget _buildBreakdownList(List<BillModel> bills, String symbol) {
+    // Group by category
+    final categories = <String, double>{};
+    for (var b in bills) {
+      if (b.amount != null) {
+        categories[b.category] = (categories[b.category] ?? 0) + b.amount!;
+      }
+    }
+
+    final sortedCategories = categories.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+
+    return Column(
+      children: sortedCategories.map((entry) => _buildBreakdownItem(entry.key, entry.value, symbol)).toList(),
+    );
+  }
+
+  Widget _buildBreakdownItem(String category, double amount, String symbol) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: GlassContainer(
+        blur: 20,
+        opacity: 0.05,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: const Color(0xFF8B5CF6).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                child: Icon(_getCategoryIcon(category), color: const Color(0xFF8B5CF6), size: 20),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(category, style: GoogleFonts.manrope(color: Colors.white, fontWeight: FontWeight.w600)),
+              ),
+              Text('$symbol${amount.toStringAsFixed(0)}', style: GoogleFonts.manrope(color: Colors.white70)),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildInsightCard(List<BillModel> bills) {
-    final unpaidCount = bills.where((b) => !b.isPaid).length;
-    return GlassContainer(
-      blur: 25,
-      opacity: 0.05,
-      borderRadius: BorderRadius.circular(20),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
-          children: [
-            const Icon(Icons.auto_awesome_rounded, color: Color(0xFFFBBF24), size: 28),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                'You have $unpaidCount upcoming bills this cycle. Total volume is normal.',
-                style: GoogleFonts.manrope(color: Colors.white70, fontSize: 14),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  IconData _getCategoryIcon(String category) {
+    switch (category) {
+      case 'Credit Card': return Icons.credit_card_rounded;
+      case 'EMI': return Icons.account_balance_rounded;
+      case 'Rent': return Icons.home_rounded;
+      case 'Subscription': return Icons.subscriptions_rounded;
+      case 'Utility': return Icons.lightbulb_outline_rounded;
+      default: return Icons.receipt_long_rounded;
+    }
   }
 }

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:glassmorphism_ui/glassmorphism_ui.dart';
 import '../models/bill_model.dart';
+import '../providers/user_provider.dart';
+import '../utils/bill_utils.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class BillCard extends StatelessWidget {
+class BillCard extends ConsumerWidget {
   final BillModel bill;
   final VoidCallback? onTap;
   final VoidCallback? onMarkPaid;
@@ -34,9 +37,11 @@ class BillCard extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final statusColor = _getStatusColor();
     final recentlyPaid = _isRecentlyPaid();
+    final currencyCode = ref.watch(currencyProvider);
+    final symbol = BillUtils.getCurrencySymbol(currencyCode);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -125,7 +130,7 @@ class BillCard extends StatelessWidget {
                   children: [
                     if (bill.amount != null)
                       Text(
-                        '\$${bill.amount!.toStringAsFixed(2)}',
+                        '$symbol${bill.amount!.toStringAsFixed(2)}',
                         style: GoogleFonts.manrope(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,

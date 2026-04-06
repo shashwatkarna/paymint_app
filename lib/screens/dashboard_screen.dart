@@ -4,15 +4,13 @@ import 'package:glassmorphism_ui/glassmorphism_ui.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/bill_model.dart';
 import '../services/firestore_service.dart';
+import '../providers/bill_provider.dart';
 import '../widgets/bill_card.dart';
+import '../utils/bill_utils.dart';
 import 'add_bill_screen.dart';
 import 'calendar_screen.dart';
 import 'stats_screen.dart';
 import 'settings_screen.dart';
-
-final billStreamProvider = StreamProvider<List<BillModel>>((ref) {
-  return FirestoreService().streamBills();
-});
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -159,27 +157,18 @@ class DashboardScreen extends ConsumerWidget {
     final today = DateTime(now.year, now.month, now.day);
     
     // Logic Refinement: Categorizing bills
-    final overdue = bills.where((b) => !b.isPaid && b.nextDueDate.isBefore(today)).toList();
-    final dueToday = bills.where((b) => !b.isPaid && 
+    final overdue = bills.where((b) => !b.isPaid && !BillUtils.isPaidInCurrentMonth(b) && b.nextDueDate.isBefore(today)).toList();
+    final dueToday = bills.where((b) => !b.isPaid && !BillUtils.isPaidInCurrentMonth(b) &&
         b.nextDueDate.year == today.year && 
         b.nextDueDate.month == today.month && 
         b.nextDueDate.day == today.day).toList();
     
-    // Filter out bills paid today to show them in their own section
     final upcoming = bills.where((b) {
-      if (b.isPaid) return false;
-      if (b.lastPaidDate != null) {
-        final paidDate = DateTime(b.lastPaidDate!.year, b.lastPaidDate!.month, b.lastPaidDate!.day);
-        if (paidDate == today) return false; // Show in "Settled Today" instead
-      }
+      if (b.isPaid || BillUtils.isPaidInCurrentMonth(b)) return false;
       return b.nextDueDate.isAfter(today);
     }).toList();
 
-    final settledToday = bills.where((b) {
-      if (b.lastPaidDate == null) return false;
-      final paidDate = DateTime(b.lastPaidDate!.year, b.lastPaidDate!.month, b.lastPaidDate!.day);
-      return paidDate == today;
-    }).toList();
+    final settledToday = bills.where((b) => BillUtils.isPaidInCurrentMonth(b)).toList();
 
     return ListView(
       physics: const BouncingScrollPhysics(),
