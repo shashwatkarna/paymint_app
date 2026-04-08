@@ -28,18 +28,11 @@ class BillCard extends ConsumerWidget {
     return const Color(0xFF8B5CF6); // Violet Glow
   }
 
-  bool _isRecentlyPaid() {
-    if (bill.lastPaidDate == null) return false;
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final paidDate = DateTime(bill.lastPaidDate!.year, bill.lastPaidDate!.month, bill.lastPaidDate!.day);
-    return paidDate == today;
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final statusColor = _getStatusColor();
-    final recentlyPaid = _isRecentlyPaid();
+    final isSettled = BillUtils.isPaidInCurrentMonth(bill);
     final currencyCode = ref.watch(currencyProvider);
     final symbol = BillUtils.getCurrencySymbol(currencyCode);
 
@@ -65,11 +58,11 @@ class BillCard extends ConsumerWidget {
                       width: 4,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: recentlyPaid ? const Color(0xFF10B981) : statusColor,
+                        color: isSettled ? const Color(0xFF10B981) : statusColor,
                         borderRadius: BorderRadius.circular(10),
                         boxShadow: [
                           BoxShadow(
-                            color: (recentlyPaid ? const Color(0xFF10B981) : statusColor).withValues(alpha: 0.6),
+                            color: (isSettled ? const Color(0xFF10B981) : statusColor).withValues(alpha: 0.6),
                             blurRadius: 12,
                             spreadRadius: 2,
                           ),
@@ -95,19 +88,19 @@ class BillCard extends ConsumerWidget {
                           Row(
                             children: [
                               Icon(
-                                recentlyPaid ? Icons.check_circle_outline_rounded : Icons.calendar_today_outlined,
+                                isSettled ? Icons.check_circle_outline_rounded : Icons.calendar_today_outlined,
                                 size: 14,
-                                color: recentlyPaid ? const Color(0xFF10B981) : Colors.white.withValues(alpha: 0.5),
+                                color: isSettled ? const Color(0xFF10B981) : Colors.white.withValues(alpha: 0.5),
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                recentlyPaid 
-                                  ? 'Settled Today'
+                                isSettled 
+                                  ? 'Settled'
                                   : 'Due: ${DateFormat('MMM dd, yyyy').format(bill.nextDueDate)}',
                                 style: GoogleFonts.inter(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500,
-                                  color: recentlyPaid ? const Color(0xFF10B981) : Colors.white.withValues(alpha: 0.5),
+                                  color: isSettled ? const Color(0xFF10B981) : Colors.white.withValues(alpha: 0.5),
                                   letterSpacing: 0.5,
                                 ),
                               ),
@@ -126,10 +119,10 @@ class BillCard extends ConsumerWidget {
                             style: GoogleFonts.manrope(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              color: recentlyPaid ? Colors.white70 : const Color(0xFFC59AFF),
+                              color: isSettled ? Colors.white70 : const Color(0xFFC59AFF),
                             ),
                           ),
-                        if (!bill.isPaid && !recentlyPaid)
+                        if (!bill.isPaid && !isSettled)
                           Padding(
                             padding: const EdgeInsets.only(top: 4.0),
                             child: TextButton(
@@ -150,7 +143,7 @@ class BillCard extends ConsumerWidget {
                               ),
                             ),
                           ),
-                        if (recentlyPaid) ...[
+                        if (isSettled) ...[
                           const SizedBox(height: 8),
                           const Icon(Icons.verified_rounded, color: Color(0xFF10B981), size: 24),
                         ],
@@ -171,8 +164,8 @@ class BillCard extends ConsumerWidget {
               decoration: BoxDecoration(
                 gradient: RadialGradient(
                   colors: [
-                    (recentlyPaid ? const Color(0xFF10B981) : statusColor).withValues(alpha: 0.08),
-                    (recentlyPaid ? const Color(0xFF10B981) : statusColor).withValues(alpha: 0),
+                    (isSettled ? const Color(0xFF10B981) : statusColor).withValues(alpha: 0.08),
+                    (isSettled ? const Color(0xFF10B981) : statusColor).withValues(alpha: 0),
                   ],
                 ),
               ),
