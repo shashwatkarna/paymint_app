@@ -3,8 +3,8 @@ allprojects {
         google()
         mavenCentral()
     }
-    // Attempt to satisfy Flutter's case-sensitive root check by using a relative path string
-    rootProject.layout.buildDirectory.set(layout.projectDirectory.dir("build"))
+    // Overiding the build directory to resolve the drive-letter case mismatch (f: vs F:) on Windows
+    rootProject.layout.buildDirectory.set(layout.projectDirectory.dir("../build"))
 }
 
 subprojects {
