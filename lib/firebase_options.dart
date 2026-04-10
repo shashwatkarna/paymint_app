@@ -1,5 +1,6 @@
 // File generated manually from google-services.json
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
@@ -29,47 +30,47 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBPQXgL1XIAHX44yRcqyHPE9P033aMNg8Q',
-    appId: '1:1066069615803:web:49a76711b5133c97f8f59e', // Corrected suffix for web
-    messagingSenderId: '1066069615803',
-    projectId: 'paymint-44cf1',
-    authDomain: 'paymint-44cf1.firebaseapp.com',
-    storageBucket: 'paymint-44cf1.firebasestorage.app',
+  static final FirebaseOptions web = FirebaseOptions(
+    apiKey: dotenv.env['FIREBASE_API_KEY']!,
+    appId: dotenv.env['FIREBASE_APP_ID_WEB']!,
+    messagingSenderId: dotenv.env['FIREBASE_MESSAGING_SENDER_ID']!,
+    projectId: dotenv.env['FIREBASE_PROJECT_ID']!,
+    authDomain: dotenv.env['FIREBASE_AUTH_DOMAIN'],
+    storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET'],
   );
 
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBPQXgL1XIAHX44yRcqyHPE9P033aMNg8Q',
-    appId: '1:1066069615803:android:49a76711b5133c97f8f59e',
-    messagingSenderId: '1066069615803',
-    projectId: 'paymint-44cf1',
-    storageBucket: 'paymint-44cf1.firebasestorage.app',
+  static final FirebaseOptions android = FirebaseOptions(
+    apiKey: dotenv.env['FIREBASE_API_KEY']!,
+    appId: dotenv.env['FIREBASE_APP_ID_ANDROID']!,
+    messagingSenderId: dotenv.env['FIREBASE_MESSAGING_SENDER_ID']!,
+    projectId: dotenv.env['FIREBASE_PROJECT_ID']!,
+    storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET'],
   );
 
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBPQXgL1XIAHX44yRcqyHPE9P033aMNg8Q',
-    appId: '1:1066069615803:ios:49a76711b5133c97f8f59e',
-    messagingSenderId: '1066069615803',
-    projectId: 'paymint-44cf1',
-    storageBucket: 'paymint-44cf1.firebasestorage.app',
+  static final FirebaseOptions ios = FirebaseOptions(
+    apiKey: dotenv.env['FIREBASE_API_KEY']!,
+    appId: dotenv.env['FIREBASE_APP_ID_IOS']!,
+    messagingSenderId: dotenv.env['FIREBASE_MESSAGING_SENDER_ID']!,
+    projectId: dotenv.env['FIREBASE_PROJECT_ID']!,
+    storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET'],
     iosBundleId: 'com.example.paymint',
   );
 
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyBPQXgL1XIAHX44yRcqyHPE9P033aMNg8Q',
-    appId: '1:1066069615803:ios:49a76711b5133c97f8f59e',
-    messagingSenderId: '1066069615803',
-    projectId: 'paymint-44cf1',
-    storageBucket: 'paymint-44cf1.firebasestorage.app',
+  static final FirebaseOptions macos = FirebaseOptions(
+    apiKey: dotenv.env['FIREBASE_API_KEY']!,
+    appId: dotenv.env['FIREBASE_APP_ID_IOS']!,
+    messagingSenderId: dotenv.env['FIREBASE_MESSAGING_SENDER_ID']!,
+    projectId: dotenv.env['FIREBASE_PROJECT_ID']!,
+    storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET'],
     iosBundleId: 'com.example.paymint',
   );
 
-  static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyBPQXgL1XIAHX44yRcqyHPE9P033aMNg8Q',
-    appId: '1:1066069615803:web:49a76711b5133c97f8f59e',
-    messagingSenderId: '1066069615803',
-    projectId: 'paymint-44cf1',
-    authDomain: 'paymint-44cf1.firebaseapp.com',
-    storageBucket: 'paymint-44cf1.firebasestorage.app',
+  static final FirebaseOptions windows = FirebaseOptions(
+    apiKey: dotenv.env['FIREBASE_API_KEY']!,
+    appId: dotenv.env['FIREBASE_APP_ID_WEB']!,
+    messagingSenderId: dotenv.env['FIREBASE_MESSAGING_SENDER_ID']!,
+    projectId: dotenv.env['FIREBASE_PROJECT_ID']!,
+    authDomain: dotenv.env['FIREBASE_AUTH_DOMAIN'],
+    storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET'],
   );
 }
