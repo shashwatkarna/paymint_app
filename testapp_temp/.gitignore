@@ -39,13 +39,7 @@ app.*.symbols
 # Obfuscation related
 app.*.map.json
 
-# Android Studio/Gradle build artifacts
-/android/app/build/
-/android/app/debug/
-/android/app/profile/
-/android/app/release/
-.gradle/
-**/build/
-
-# Environment variables
-.env
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
