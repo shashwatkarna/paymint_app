@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:glassmorphism_ui/glassmorphism_ui.dart';
 import '../models/bill_model.dart';
 import '../providers/bill_provider.dart';
 import '../widgets/bill_card.dart';
 import '../services/firestore_service.dart';
+import 'add_bill_screen.dart';
+import '../widgets/glass_button.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
   const CalendarScreen({super.key});
@@ -111,8 +114,30 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final selectedBills = _getBillsForDay(_selectedDay!, bills);
 
     if (selectedBills.isEmpty) {
-      return const Center(
-        child: Text('No bills due on this day.', style: TextStyle(color: Colors.white54)),
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.calendar_today_outlined, color: Colors.white24, size: 64),
+            const SizedBox(height: 16),
+            Text(
+              'No bills due on this day.',
+              style: GoogleFonts.outfit(color: Colors.white54, fontSize: 16),
+            ),
+            const SizedBox(height: 24),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: GlassButton(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AddBillScreen()),
+                ),
+                text: 'Add a Bill',
+                icon: Icons.add_rounded,
+              ),
+            ),
+          ],
+        ),
       );
     }
 

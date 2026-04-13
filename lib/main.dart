@@ -46,7 +46,7 @@ class PayMintApp extends ConsumerWidget {
         brightness: Brightness.light,
         colorSchemeSeed: const Color(0xFF8B5CF6),
         scaffoldBackgroundColor: const Color(0xFFF8FAFC),
-        textTheme: GoogleFonts.manropeTextTheme(
+        textTheme: GoogleFonts.outfitTextTheme(
           ThemeData.light().textTheme,
         ),
       ),
@@ -61,10 +61,10 @@ class PayMintApp extends ConsumerWidget {
           onSurface: const Color(0xFFDEE5FF),
           onSurfaceVariant: const Color(0xFFA3AAC4),
         ),
-        textTheme: GoogleFonts.manropeTextTheme(
+        textTheme: GoogleFonts.outfitTextTheme(
           ThemeData.dark().textTheme.copyWith(
-            displayLarge: GoogleFonts.manrope(fontWeight: FontWeight.bold, letterSpacing: -0.5, color: Colors.white),
-            headlineMedium: GoogleFonts.manrope(fontWeight: FontWeight.bold, letterSpacing: 0.5, color: Colors.white),
+            displayLarge: GoogleFonts.outfit(fontWeight: FontWeight.bold, letterSpacing: -0.5, color: Colors.white),
+            headlineMedium: GoogleFonts.outfit(fontWeight: FontWeight.bold, letterSpacing: 0.5, color: Colors.white),
             labelMedium: GoogleFonts.inter(fontWeight: FontWeight.w500, letterSpacing: 0.8),
           ).apply(
             bodyColor: const Color(0xFFDEE5FF),
