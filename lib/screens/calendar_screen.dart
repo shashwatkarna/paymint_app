@@ -115,28 +115,30 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
     if (selectedBills.isEmpty) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.calendar_today_outlined, color: Colors.white24, size: 64),
-            const SizedBox(height: 16),
-            Text(
-              'No bills due on this day.',
-              style: GoogleFonts.outfit(color: Colors.white54, fontSize: 16),
-            ),
-            const SizedBox(height: 24),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40),
-              child: GlassButton(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const AddBillScreen()),
-                ),
-                text: 'Add a Bill',
-                icon: Icons.add_rounded,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.calendar_today_outlined, color: Colors.white24, size: 64),
+              const SizedBox(height: 16),
+              Text(
+                'No bills due on this day.',
+                style: GoogleFonts.outfit(color: Colors.white54, fontSize: 16),
               ),
-            ),
-          ],
+              const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 40),
+                child: GlassButton(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AddBillScreen()),
+                  ),
+                  text: 'Add a Bill',
+                  icon: Icons.add_rounded,
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }

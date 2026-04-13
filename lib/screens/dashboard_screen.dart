@@ -103,7 +103,7 @@ class DashboardScreen extends ConsumerWidget {
               children: [
                 Text(
                   'PayMint',
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.outfit(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                     letterSpacing: -0.5,
