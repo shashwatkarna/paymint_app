@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../providers/user_provider.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -42,6 +44,9 @@ class SettingsScreen extends ConsumerWidget {
                     _buildSectionHeader('Support'),
                     _buildSettingTile(Icons.help_outline_rounded, 'Help Center', 'FAQs and troubleshooting', null),
                     _buildSettingTile(Icons.security_rounded, 'Privacy Policy', 'How we handle your data', null),
+                    const SizedBox(height: 32),
+                    _buildSectionHeader('About'),
+                    _buildAboutSection(context),
                     const SizedBox(height: 32),
                     _buildSignOutButton(context, authService),
                     const SizedBox(height: 48),
@@ -232,6 +237,74 @@ class SettingsScreen extends ConsumerWidget {
           trailing: trailing ?? const Icon(Icons.chevron_right_rounded, color: Colors.white24),
         ),
       ),
+    );
+  }
+
+  Widget _buildAboutSection(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: GlassContainer(
+        blur: 20,
+        opacity: 0.05,
+        borderRadius: BorderRadius.circular(28),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.info_outline_rounded, color: Color(0xFF8B5CF6), size: 24),
+                  ),
+                  const SizedBox(width: 16),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Developer', style: GoogleFonts.manrope(color: Colors.white54, fontSize: 12)),
+                      Text('Shashwat Karna', style: GoogleFonts.manrope(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'PayMint is a premium, modern bill reminder app designed to simplify your financial life. With elegant glassmorphism and smart recurring logic, it ensures you never miss a payment again.',
+                style: GoogleFonts.manrope(color: Colors.white70, fontSize: 13, height: 1.5),
+              ),
+              const SizedBox(height: 24),
+              const Divider(color: Colors.white10),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                   _buildSocialIcon(FontAwesomeIcons.github, 'https://github.com/shashwatkarna'),
+                   _buildSocialIcon(FontAwesomeIcons.linkedin, 'https://linkedin.com/in/shashwatkarna'),
+                   _buildSocialIcon(FontAwesomeIcons.xTwitter, 'https://twitter.com/shashwat_karna'),
+                   _buildSocialIcon(FontAwesomeIcons.instagram, 'https://instagram.com/karn_shashwat'),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSocialIcon(dynamic icon, String url) {
+    return IconButton(
+      icon: FaIcon(icon as FaIconData?, color: Colors.white54, size: 20),
+      onPressed: () async {
+        final uri = Uri.parse(url);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+      },
     );
   }
 

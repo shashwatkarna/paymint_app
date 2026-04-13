@@ -3,8 +3,6 @@ allprojects {
         google()
         mavenCentral()
     }
-    // Overiding the build directory to resolve the drive-letter case mismatch (f: vs F:) on Windows
-    rootProject.layout.buildDirectory.set(layout.projectDirectory.dir("../build"))
 }
 
 subprojects {

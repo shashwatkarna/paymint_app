@@ -12,6 +12,7 @@ import 'add_bill_screen.dart';
 import 'calendar_screen.dart';
 import 'stats_screen.dart';
 import 'settings_screen.dart';
+import 'settlement_history_screen.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -236,6 +237,7 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
+
   Widget _buildSliverBillList(BuildContext context, List<BillModel> bills) {
     if (bills.isEmpty) {
       return SliverFillRemaining(
@@ -260,7 +262,15 @@ class DashboardScreen extends ConsumerWidget {
     final dueToday = bills.where((b) => !b.isPaid && !BillUtils.isPaidInCurrentMonth(b) &&
         b.nextDueDate.year == today.year && b.nextDueDate.month == today.month && b.nextDueDate.day == today.day).toList();
     final upcoming = bills.where((b) => !b.isPaid && !BillUtils.isPaidInCurrentMonth(b) && b.nextDueDate.isAfter(today)).toList();
+    
+    // Sort settled bills by timestamp (newest first) and limit to 5
     final settledToday = bills.where((b) => BillUtils.isPaidInCurrentMonth(b)).toList();
+    settledToday.sort((a, b) {
+      final dateA = a.settledAt ?? a.lastPaidDate ?? DateTime(0);
+      final dateB = b.settledAt ?? b.lastPaidDate ?? DateTime(0);
+      return dateB.compareTo(dateA);
+    });
+    final visibleSettled = settledToday.take(5).toList();
 
     return SliverList(
       delegate: SliverChildListDelegate([
@@ -274,31 +284,37 @@ class DashboardScreen extends ConsumerWidget {
         ],
         if (upcoming.isNotEmpty) ...[
           _buildEtherealSectionHeader('UPCOMING', Colors.white38),
-          ...upcoming.asMap().entries.map((entry) => _buildStaggeredBillCard(context, entry.value, entry.key, false, isSettled: true)),
+          ...upcoming.asMap().entries.map((entry) => _buildStaggeredBillCard(context, entry.value, entry.key, false)),
         ],
         if (settledToday.isNotEmpty) ...[
-          _buildEtherealSectionHeader('SETTLED', const Color(0xFF10B981)),
-          ...settledToday.asMap().entries.map((entry) => _buildStaggeredBillCard(context, entry.value, entry.key, false, isSettled: true)),
+          _buildEtherealSectionHeader(
+            'SETTLED (RECENT)', 
+            const Color(0xFF10B981),
+            trailing: GestureDetector(
+              onTap: () => _navigateTo(context, const SettlementHistoryScreen()),
+              child: Text(
+                'VIEW ALL',
+                style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF10B981)),
+              ),
+            ),
+          ),
+          ...visibleSettled.asMap().entries.map((entry) => _buildStaggeredBillCard(context, entry.value, entry.key, false, isSettled: true)),
         ],
       ]),
     );
   }
 
   Widget _buildStaggeredBillCard(BuildContext context, BillModel bill, int index, bool isOverdue, {bool isSettled = false}) {
-    // Implement Asymmetrical Staggering (Disabled for Settled items)
-    final double leftPadding = isSettled ? 0 : (index.isEven ? 0 : 12);
-    final double rightPadding = isSettled ? 0 : (index.isEven ? 12 : 0);
-
     return Padding(
-      padding: EdgeInsets.only(left: leftPadding, right: rightPadding),
+      padding: const EdgeInsets.symmetric(horizontal: 0),
       child: BillCard(
         bill: bill, 
-        onMarkPaid: isSettled ? null : () => _markPaid(context, bill)
+        onMarkPaid: isSettled ? null : () => _confirmAndMarkPaid(context, bill)
       ),
     );
   }
 
-  Widget _buildEtherealSectionHeader(String title, Color color) {
+  Widget _buildEtherealSectionHeader(String title, Color color, {Widget? trailing}) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(32, 32, 24, 12),
       child: Row(
@@ -314,11 +330,57 @@ class DashboardScreen extends ConsumerWidget {
           ),
           const SizedBox(width: 12),
           Expanded(child: Container(height: 1, color: Colors.white.withValues(alpha: 0.05))),
+          if (trailing != null) ...[
+            const SizedBox(width: 12),
+            trailing,
+          ],
         ],
       ),
     );
   }
 
+  Future<void> _confirmAndMarkPaid(BuildContext context, BillModel bill) async {
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => GlassContainer(
+        blur: 20,
+        opacity: 0.1,
+        borderRadius: BorderRadius.circular(24),
+        child: AlertDialog(
+          backgroundColor: Colors.transparent,
+          title: Text('Settle Bill?', style: GoogleFonts.manrope(color: Colors.white, fontWeight: FontWeight.bold)),
+          content: Text('Confirming payment for "${bill.name}"?', style: GoogleFonts.manrope(color: Colors.white70)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text('Cancel', style: GoogleFonts.manrope(color: Colors.white38)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text('Settle', style: GoogleFonts.manrope(color: const Color(0xFF10B981), fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirm == true) {
+      await FirestoreService().markAsPaid(bill);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Settled ${bill.name}!', style: GoogleFonts.inter()),
+            backgroundColor: const Color(0xFF10B981),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  void _navigateTo(BuildContext context, Widget screen) {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => screen));
+  }
 
   Widget _buildBottomNav(BuildContext context) {
     return Container(
@@ -383,23 +445,5 @@ class DashboardScreen extends ConsumerWidget {
         onPressed: () => _navigateTo(context, const AddBillScreen()),
       ),
     );
-  }
-
-  Future<void> _markPaid(BuildContext context, BillModel bill) async {
-    await FirestoreService().markAsPaid(bill);
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Settled ${bill.name} for this cycle!', style: GoogleFonts.inter()),
-          backgroundColor: const Color(0xFF10B981),
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
-  }
-
-  void _navigateTo(BuildContext context, Widget screen) {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => screen));
   }
 }

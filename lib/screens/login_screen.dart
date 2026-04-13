@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:glassmorphism_ui/glassmorphism_ui.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../services/auth_service.dart';
 import 'signup_screen.dart';
 
@@ -127,6 +128,73 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 40),
                     
                     _buildLoginButton(),
+                    const SizedBox(height: 24),
+                    
+                    Row(
+                      children: [
+                        const Expanded(child: Divider(color: Colors.white10)),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            'Or continue with',
+                            style: GoogleFonts.manrope(color: Colors.white24, fontSize: 13),
+                          ),
+                        ),
+                        const Expanded(child: Divider(color: Colors.white10)),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    // Google Login Button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 60,
+                      child: GlassContainer(
+                        blur: 25,
+                        opacity: 0.1,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.fromBorderSide(
+                          BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1),
+                        ),
+                        child: InkWell(
+                          onTap: () async {
+                            final error = await _auth.signInWithGoogle();
+                            if (!context.mounted) return;
+                            if (error != null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(error, style: GoogleFonts.manrope(color: Colors.white)),
+                                  backgroundColor: Colors.redAccent,
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                              );
+                            } else {
+                              Navigator.popUntil(context, (route) => route.isFirst);
+                            }
+                            if (mounted) {
+                              setState(() => _isLoggingIn = false);
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(20),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const FaIcon(FontAwesomeIcons.google, color: Colors.white, size: 20),
+                              const SizedBox(width: 12),
+                              Text(
+                                'Google Account',
+                                style: GoogleFonts.manrope(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 24),
                     
                     Row(

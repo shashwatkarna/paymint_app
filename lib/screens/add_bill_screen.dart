@@ -24,6 +24,7 @@ class _AddBillScreenState extends ConsumerState<AddBillScreen> {
   DateTime _dueDate = DateTime.now();
   String _category = 'Credit Card';
   RecurringFrequency _frequency = RecurringFrequency.monthly;
+  DateTime? _endDateTime;
   bool _isSaving = false;
 
   @override
@@ -35,6 +36,7 @@ class _AddBillScreenState extends ConsumerState<AddBillScreen> {
       _dueDate = widget.bill!.nextDueDate;
       _category = widget.bill!.category;
       _frequency = widget.bill!.frequency;
+      _endDateTime = widget.bill!.endDateTime;
     }
   }
 
@@ -44,12 +46,14 @@ class _AddBillScreenState extends ConsumerState<AddBillScreen> {
       
       final bill = BillModel(
         id: widget.bill?.id ?? '',
+        userId: widget.bill?.userId ?? '', // Important: Maintain userId
         name: _nameController.text,
         amount: double.tryParse(_amountController.text),
         dueDate: widget.bill?.dueDate ?? _dueDate,
         nextDueDate: _dueDate,
         category: _category,
         frequency: _frequency,
+        endDateTime: _endDateTime,
       );
 
       try {
@@ -159,10 +163,15 @@ class _AddBillScreenState extends ConsumerState<AddBillScreen> {
                     _buildLabel('CATEGORY'),
                     _buildCategorySelector(),
                     const SizedBox(height: 32),
-                    _buildLabel('RECURRENCE'),
-                    _buildFrequencySelector(),
-                    const SizedBox(height: 48),
-                    _buildSaveButton(),
+                     _buildLabel('RECURRENCE'),
+                     _buildFrequencySelector(),
+                     if (_frequency != RecurringFrequency.none) ...[
+                       const SizedBox(height: 32),
+                       _buildLabel('END RECURRENCE (OPTIONAL)'),
+                       _buildEndDatePicker(),
+                     ],
+                     const SizedBox(height: 48),
+                     _buildSaveButton(),
                   ],
                 ),
               ),
@@ -249,6 +258,51 @@ class _AddBillScreenState extends ConsumerState<AddBillScreen> {
             ),
           );
           if (picked != null) setState(() => _dueDate = picked);
+        },
+      ),
+    );
+  }
+
+  Widget _buildEndDatePicker() {
+    return GlassContainer(
+      blur: 30,
+      opacity: 0.05,
+      borderRadius: BorderRadius.circular(24),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        leading: const Icon(Icons.event_busy_rounded, color: Colors.white24, size: 20),
+        title: Text(
+          _endDateTime == null ? 'No End Date' : DateFormat('MMM dd, yyyy').format(_endDateTime!),
+          style: GoogleFonts.manrope(
+            color: _endDateTime == null ? Colors.white24 : Colors.white, 
+            fontSize: 16, 
+            fontWeight: FontWeight.bold
+          ),
+        ),
+        trailing: _endDateTime != null 
+          ? IconButton(
+              icon: const Icon(Icons.close_rounded, color: Colors.redAccent, size: 20),
+              onPressed: () => setState(() => _endDateTime = null),
+            )
+          : const Icon(Icons.edit_calendar_rounded, color: Color(0xFF8B5CF6), size: 20),
+        onTap: () async {
+          final picked = await showDatePicker(
+            context: context,
+            initialDate: _endDateTime ?? _dueDate.add(const Duration(days: 30)),
+            firstDate: _dueDate,
+            lastDate: DateTime(2100),
+            builder: (context, child) => Theme(
+              data: Theme.of(context).copyWith(
+                colorScheme: const ColorScheme.dark(
+                  primary: Color(0xFF8B5CF6),
+                  onPrimary: Colors.white,
+                  surface: Color(0xFF060E20),
+                ),
+              ),
+              child: child!,
+            ),
+          );
+          if (picked != null) setState(() => _endDateTime = picked);
         },
       ),
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:glassmorphism_ui/glassmorphism_ui.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import 'login_screen.dart';
@@ -155,6 +156,86 @@ class _SignupScreenState extends State<SignupScreen> {
             _buildTextField(_confirmPasswordController, 'Confirm password', Icons.lock_reset_rounded, true),
             const SizedBox(height: 48),
             _buildActionButton('Continue', _nextStep),
+            const SizedBox(height: 24),
+            
+            Row(
+              children: [
+                const Expanded(child: Divider(color: Colors.white10)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    'Or continue with',
+                    style: GoogleFonts.manrope(color: Colors.white24, fontSize: 13),
+                  ),
+                ),
+                const Expanded(child: Divider(color: Colors.white10)),
+              ],
+            ),
+            const SizedBox(height: 24),
+            
+            // Google Signup Button
+            SizedBox(
+              width: double.infinity,
+              height: 60,
+              child: GlassContainer(
+                blur: 25,
+                opacity: 0.1,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.fromBorderSide(
+                  BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1),
+                ),
+                child: InkWell(
+                  onTap: () async {
+                    setState(() => _isLoading = true);
+                    final error = await _auth.signInWithGoogle();
+                    
+                    if (!context.mounted) return;
+                    if (error != null) {
+                      if (context.mounted) _showError(error);
+                      if (mounted) setState(() => _isLoading = false);
+                      return;
+                    }
+
+                    // For Google Sign-In, we might want to auto-create a profile if it doesn't exist
+                    final user = _auth.currentUser;
+                    if (user != null) {
+                      // Check if profile exists; if not, use display name
+                      final existing = await _userService.getProfile(user.uid);
+                      if (existing == null) {
+                        await _userService.saveProfile(UserProfile(
+                          uid: user.uid,
+                          name: user.displayName ?? 'New User',
+                          age: 0,
+                        ));
+                      }
+                    }
+
+                    // Final safety check before specialized BuildContext operations
+                    if (!mounted) return;
+                    Navigator.popUntil(context, (route) => route.isFirst);
+                    if (mounted) {
+                      setState(() => _isLoading = false);
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const FaIcon(FontAwesomeIcons.google, color: Colors.white, size: 20),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Google Account',
+                        style: GoogleFonts.manrope(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
             const SizedBox(height: 24),
             _buildLoginLink(),
           ],
